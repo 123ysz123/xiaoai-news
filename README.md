@@ -1,8 +1,32 @@
 # 小爱新闻播报
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
+![Python](https://img.shields.io/badge/Python-3-3776AB?logo=python&logoColor=white)
+[![GitHub stars](https://img.shields.io/github/stars/123ysz123/xiaoai-news?logo=github&label=stars)](https://github.com/123ysz123/xiaoai-news/stargazers)
+[![Last commit](https://img.shields.io/github/last-commit/123ysz123/xiaoai-news?label=last%20commit)](https://github.com/123ysz123/xiaoai-news/commits/main)
+
 给 [xiaomusic](https://github.com/hanxi/xiaomusic) 加一套**新闻播报服务**和**TTS 网关**：每天定时抓取 RSS 新闻，合成语音，让小爱音箱自己念出来。
 
 全部功能跑在一个复用 xiaomusic 镜像的网关容器里，不新增镜像、不改动 xiaomusic 源码。
+
+## 界面
+
+单页控制台，无前端框架、无构建步骤。运行状态、音量旋钮、整点排期、新闻源管理、内容规则、播报预览和运行日志都在这一页：
+
+![控制台](assets/console.png)
+
+拖动旋钮、滚轮或方向键都能调音量，静音会记住当前音量，再点一次自动恢复：
+
+![音量旋钮](assets/volume-knob.png)
+
+点「立即拉取测试」只采集不播报，先看清这次会念哪几条、大概多久：
+
+![新闻预览](assets/news-preview.png)
+
+> 截图中的新闻条目为示例数据，实际内容取决于你启用的源和当天的新闻。
+
+## 架构
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -118,6 +142,7 @@ curl -X POST http://127.0.0.1:58091/tts \
 ├── Dockerfile                 # 在官方镜像上打三个补丁
 ├── docker-compose.yml         # xiaomusic + gateway 两个容器
 ├── .env.example               # 环境变量模板
+├── assets/                    # README 用的界面截图
 ├── gateway/
 │   ├── gateway.py             # FastAPI 主应用：TTS 网关 + 新闻路由
 │   ├── news/
