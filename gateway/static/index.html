@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小爱新闻播报控制台</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#ffffff; --line:#e4e8ef; --text:#1f2937;
+    --muted:#6b7280; --accent:#2563eb; --accent-soft:#eff4ff;
+    --ok:#059669; --warn:#d97706; --err:#dc2626;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  h1{font-size:20px;margin:0;font-weight:600;letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:12px;margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px}
+  .card h2{font-size:14px;margin:0 0 14px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:3px;height:14px;background:var(--accent);border-radius:2px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat{background:var(--accent-soft);border-radius:10px;padding:12px 14px}
+  .stat .k{font-size:11px;color:var(--muted);letter-spacing:.5px}
+  .stat .v{font-size:17px;font-weight:600;margin-top:4px}
+  .stat .v.ok{color:var(--ok)} .stat .v.warn{color:var(--warn)} .stat .v.err{color:var(--err)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button{
+    font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);
+    background:#fff;color:var(--text);padding:8px 16px;transition:.15s;
+  }
+  button:hover{border-color:#c7d2e5;background:#fafbfd}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{background:#1d4ed8}
+  button.danger{color:var(--err);border-color:#f3c9c9}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  button.sm{padding:4px 10px;font-size:12px}
+  .grid-hours{display:grid;grid-template-columns:repeat(12,1fr);gap:6px}
+  @media(max-width:640px){.grid-hours{grid-template-columns:repeat(6,1fr)}}
+  .hour{
+    text-align:center;padding:7px 0;border:1px solid var(--line);border-radius:7px;
+    cursor:pointer;user-select:none;font-size:12px;background:#fff;transition:.12s;
+  }
+  .hour:hover{border-color:#b9c6dd}
+  .hour.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .hour.quiet{opacity:.45}
+  .src-list{display:flex;flex-direction:column;gap:8px}
+  .src{
+    display:grid;grid-template-columns:26px 1fr auto auto;gap:10px;align-items:center;
+    border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:#fff;
+  }
+  .src .idx{color:var(--muted);font-size:12px;text-align:center}
+  .src .nm{font-weight:500}
+  .src .meta{color:var(--muted);font-size:11px;margin-top:1px;word-break:break-all}
+  .src.off{opacity:.5}
+  .tag{display:inline-block;padding:1px 8px;border-radius:20px;background:var(--accent-soft);color:var(--accent);font-size:11px}
+  .tag.cat{background:#f1f5f9;color:#475569}
+  .switch{position:relative;display:inline-block;width:38px;height:21px;flex:0 0 auto}
+  .switch input{display:none}
+  .slider{position:absolute;inset:0;background:#cbd5e1;border-radius:20px;transition:.18s;cursor:pointer}
+  .slider:before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s}
+  .switch input:checked + .slider{background:var(--accent)}
+  .switch input:checked + .slider:before{transform:translateX(17px)}
+  .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  .field input[type=text],.field input[type=number],.field select{
+    width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:7px;font:inherit;background:#fff;color:var(--text);
+  }
+  .field input:focus,.field select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{
+    padding:5px 14px;border:1px solid var(--line);border-radius:20px;cursor:pointer;
+    font-size:12px;user-select:none;background:#fff;
+  }
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  details.adv summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px}
+  details.adv summary::-webkit-details-marker{display:none}
+  details.adv summary:before{content:"▸";color:var(--muted);transition:.2s}
+  details.adv[open] summary:before{transform:rotate(90deg)}
+  details.adv .body{margin-top:16px}
+  .news-item{border-left:3px solid var(--accent);padding:6px 0 6px 12px;margin-bottom:10px}
+  .news-item .t{font-weight:500}
+  .news-item .m{font-size:12px;color:var(--muted);margin-top:2px}
+  .logs{
+    background:#0f172a;color:#cbd5e1;border-radius:9px;padding:12px;height:220px;overflow:auto;
+    font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;word-break:break-all;
+  }
+  .empty{color:var(--muted);font-size:13px;padding:14px 0}
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);
+    background:#111827;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;
+    opacity:0;transition:.25s;pointer-events:none;z-index:99;max-width:80vw;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:var(--err)}
+  .toast.ok{background:var(--ok)}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+
+  /* ---- 音量旋钮 ---- */
+  .vol-wrap{display:flex;align-items:center;gap:32px;flex-wrap:wrap}
+  .knob{
+    position:relative;width:150px;height:150px;flex:0 0 auto;
+    cursor:grab;user-select:none;touch-action:none;outline:none;
+  }
+  .knob:active{cursor:grabbing}
+  .knob:focus-visible .knob-ring{stroke:#93b4f7}
+  .knob svg{width:100%;height:100%;display:block;overflow:visible}
+  .knob-track{stroke:#e4e8ef;stroke-width:10;fill:none;stroke-linecap:round}
+  .knob-prog{stroke:var(--accent);stroke-width:10;fill:none;stroke-linecap:round;transition:stroke-dasharray .08s linear}
+  .knob.muted .knob-prog{stroke:#9aa6b8}
+  .knob-needle{stroke:var(--accent);stroke-width:3;stroke-linecap:round}
+  .knob.muted .knob-needle{stroke:#9aa6b8}
+  .knob-hub{fill:var(--accent);opacity:.1}
+  .knob-val{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;pointer-events:none;
+  }
+  .knob-val b{font-size:26px;font-weight:600;line-height:1}
+  .knob-val small{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px}
+  .vol-side{display:flex;flex-direction:column;gap:14px;flex:1 1 220px}
+  .mute-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 18px;border-radius:10px;font-size:15px;font-weight:500;
+    border:1px solid var(--line);background:#fff;color:var(--text);
+  }
+  .mute-btn.on{background:var(--err);border-color:var(--err);color:#fff}
+  .mute-btn .ic{font-size:17px}
+  .vol-presets{display:flex;gap:8px;flex-wrap:wrap}
+  .vol-presets .chip{min-width:52px;text-align:center}
+  .loading{opacity:.6;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>小爱新闻播报控制台</h1>
+      <div class="sub">定时抓取 RSS 新闻，自动调用小爱音箱语音播报</div>
+    </div>
+  </header>
+
+  <!-- 状态 -->
+  <div class="card">
+    <h2><span class="dot"></span>运行状态</h2>
+    <div class="stats" id="stats">
+      <div class="stat"><div class="k">调度器</div><div class="v" id="st-sched">—</div></div>
+      <div class="stat">
+        <div class="k">下次播报</div>
+        <div class="v" id="st-next" style="font-size:14px">—</div>
+        <div class="k" id="st-next-note" style="margin-top:2px"></div>
+      </div>
+      <div class="stat"><div class="k">启用新闻源</div><div class="v" id="st-src">—</div></div>
+      <div class="stat">
+        <div class="k">当前时段</div>
+        <div class="v" id="st-quiet">—</div>
+        <div class="k" id="st-quiet-note" style="margin-top:2px"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="primary" id="btn-preview" onclick="doPreview()">立即拉取测试</button>
+      <button class="primary" id="btn-broadcast" onclick="doBroadcast()">立即播报测试</button>
+      <button id="btn-save" onclick="saveConfig()">保存配置</button>
+      <button class="danger" onclick="resetConfig()">恢复默认</button>
+    </div>
+  </div>
+
+  <!-- 音量 -->
+  <div class="card">
+    <h2><span class="dot"></span>音量控制
+      <span class="sub" id="vol-state" style="margin-left:auto;font-weight:400"></span>
+    </h2>
+    <div class="vol-wrap">
+      <div class="knob" id="knob" tabindex="0" role="slider"
+           aria-label="音量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+        <svg viewBox="0 0 140 140">
+          <circle class="knob-ring knob-track" cx="70" cy="70" r="52"
+                  stroke-dasharray="245.04 326.73" transform="rotate(135 70 70)"/>
+          <circle class="knob-ring knob-prog" id="knob-prog" cx="70" cy="70" r="52"
+                  stroke-dasharray="0 326.73" transform="rotate(135 70 70)"/>
+          <circle class="knob-hub" cx="70" cy="70" r="34"/>
+          <line class="knob-needle" id="knob-needle" x1="70" y1="46" x2="70" y2="26"
+                transform="rotate(0 70 70)"/>
+        </svg>
+        <div class="knob-val"><b id="vol-num">--</b><small id="vol-label">音量</small></div>
+      </div>
+      <div class="vol-side">
+        <button class="mute-btn" id="btn-mute" onclick="toggleMute()">
+          <span class="ic" id="mute-icon">🔊</span><span id="mute-text">立即静音</span>
+        </button>
+        <div class="vol-presets">
+          <div class="chip" onclick="quickVolume(20)">20</div>
+          <div class="chip" onclick="quickVolume(40)">40</div>
+          <div class="chip" onclick="quickVolume(60)">60</div>
+          <div class="chip" onclick="quickVolume(80)">80</div>
+          <div class="chip" onclick="quickVolume(100)">100</div>
+        </div>
+        <div class="hint">拖动旋钮或滚动滚轮调节，方向键也可微调。静音会记住当前音量，再点一次恢复。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 播报时间 -->
+  <div class="card">
+    <h2><span class="dot"></span>播报时间</h2>
+    <div class="row" style="margin-bottom:12px">
+      <button class="sm" onclick="preset('morning')">早间档 7-8</button>
+      <button class="sm" onclick="preset('noon')">午间档 12</button>
+      <button class="sm" onclick="preset('evening')">晚间档 18/21</button>
+      <button class="sm" onclick="preset('all')">全天整点</button>
+      <button class="sm" onclick="preset('clear')">清空</button>
+    </div>
+    <div class="grid-hours" id="hours"></div>
+    <div class="fields" style="margin-top:16px">
+      <div class="field">
+        <label>静音时段开始（该小时起不播报）</label>
+        <select id="quiet-start"></select>
+      </div>
+      <div class="field">
+        <label>静音时段结束（该小时起恢复）</label>
+        <select id="quiet-end"></select>
+      </div>
+    </div>
+    <div class="hint">静音时段支持跨零点，例如 23 → 7 表示 23:00 到次日 07:00 不播报。</div>
+  </div>
+
+  <!-- 新闻源 -->
+  <div class="card">
+    <h2><span class="dot"></span>新闻源管理<span class="sub" style="margin-left:auto;font-weight:400">顺序即优先级，靠前优先采用</span></h2>
+    <div class="src-list" id="sources"></div>
+    <div class="fields" style="margin-top:16px">
+      <div class="field"><label>源名称</label><input id="ns-name" type="text" placeholder="例如：某某新闻"></div>
+      <div class="field"><label>RSS 地址</label><input id="ns-url" type="text" placeholder="https://example.com/rss.xml"></div>
+      <div class="field"><label>分类</label><select id="ns-cat"></select></div>
+      <div class="field" style="display:flex;align-items:flex-end"><button onclick="addSource()">添加自定义源</button></div>
+    </div>
+  </div>
+
+  <!-- 内容规则 -->
+  <div class="card">
+    <h2><span class="dot"></span>内容规则</h2>
+    <div class="fields">
+      <div class="field"><label>单条字数上限</label><input id="r-chars" type="number" min="10" max="300"></div>
+      <div class="field"><label>单次最大条数</label><input id="r-items" type="number" min="1" max="20"></div>
+      <div class="field"><label>单次最大时长（秒）</label><input id="r-dur" type="number" min="20" max="1800"></div>
+      <div class="field"><label>语速（字/秒，用于估时长）</label><input id="r-cps" type="number" min="1" max="12" step="0.5"></div>
+      <div class="field"><label>去重窗口（小时）</label><input id="r-dedup-h" type="number" min="1" max="168"></div>
+    </div>
+    <div style="margin-top:16px">
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:8px">新闻类型筛选</label>
+      <div class="chips" id="cats"></div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <label class="switch"><input type="checkbox" id="r-dedup"><span class="slider"></span></label>
+      <span>开启去重（同一条新闻在窗口内不重复播报）</span>
+    </div>
+  </div>
+
+  <!-- 高级 -->
+  <div class="card">
+    <details class="adv">
+      <summary>高级设置</summary>
+      <div class="body">
+        <div class="fields">
+          <div class="field"><label>设备 DID（留空使用默认）</label><input id="a-did" type="text" placeholder="留空则用环境变量 DEFAULT_DID，如 123456789"></div>
+          <div class="field"><label>TTS 接口地址（留空走内部直连）</label><input id="a-url" type="text" placeholder="留空即可"></div>
+          <div class="field"><label>失败重试次数</label><input id="a-retry" type="number" min="0" max="5"></div>
+          <div class="field"><label>TTS 超时（秒）</label><input id="a-timeout" type="number" min="30" max="600"></div>
+          <div class="field"><label>历史保留天数</label><input id="a-keep" type="number" min="1" max="365"></div>
+        </div>
+        <div class="fields" style="margin-top:14px">
+          <div class="field"><label>开场白</label><input id="a-intro" type="text"></div>
+          <div class="field"><label>结束语</label><input id="a-outro" type="text"></div>
+        </div>
+        <div class="row" style="margin-top:16px">
+          <label class="switch"><input type="checkbox" id="a-pause"><span class="slider"></span></label>
+          <span>播报前自动暂停正在播放的音乐</span>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <!-- 预览结果 -->
+  <div class="card">
+    <h2><span class="dot"></span>本次新闻预览<span class="sub" id="preview-meta" style="margin-left:auto;font-weight:400"></span></h2>
+    <div id="preview"><div class="empty">点击「立即拉取测试」查看将要播报的内容</div></div>
+  </div>
+
+  <!-- 日志 -->
+  <div class="card">
+    <h2><span class="dot"></span>运行日志
+      <button class="sm" style="margin-left:auto" onclick="loadLogs()">刷新</button>
+    </h2>
+    <div class="logs" id="logs">加载中…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

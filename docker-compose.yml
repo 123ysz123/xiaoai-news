@@ -1,0 +1,59 @@
+# 两条容器：xiaomusic 本体 + 网关（TTS 转发 + 新闻播报）
+#
+# 用法：
+#   cp .env.example .env      # 修改 UPSTREAM / DEFAULT_DID
+#   docker compose up -d --build
+
+services:
+  # ---------------------------------------------------------------- 本体
+  # 官方 xiaomusic，加上 Dockerfile 里的三个补丁（TTS / 音量 / 依赖）
+  xiaomusic:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: xiaomusic:news
+    container_name: xiaomusic
+    restart: always
+    ports:
+      - "58090:8090"
+    volumes:
+      # 配置持久化：登录凭据、设置、插件都在这里，务必挂载
+      - ./data/conf:/app/conf
+      - ./data/music:/app/music
+    environment:
+      - TZ=Asia/Shanghai
+
+  # ---------------------------------------------------------------- 网关
+  # 复用 xiaomusic 镜像，不额外装依赖；同时提供 TTS API 与新闻播报服务
+  gateway:
+    image: xiaomusic:news
+    container_name: xiaomusic-gateway
+    restart: always
+    depends_on:
+      - xiaomusic
+    ports:
+      - "58091:8091"
+    volumes:
+      # 代码目录，改完重启容器即生效
+      - ./gateway:/gw
+      # 新闻服务数据：配置、历史、日志、静音状态
+      - ./data/news-service:/data/news-service
+      # 复用本体的 conf，避免重复登录小米账号
+      - ./data/conf:/app/conf
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Shanghai
+      - NEWS_DIR=/data/news-service
+      - NEWS_STATIC=/gw/static
+    command:
+      - /app/.venv/bin/python3
+      - -m
+      - uvicorn
+      - gateway:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8091"
+      - --app-dir
+      - /gw
