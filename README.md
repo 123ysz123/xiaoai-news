@@ -133,10 +133,8 @@ curl -X POST http://127.0.0.1:58091/tts \
 │   └── static/
 │       ├── index.html         # 单页控制台
 │       └── app.js             # 前端逻辑（无框架依赖）
-├── client/
-│   └── xiaomusic_tts_client.py  # 纯标准库 TTS 客户端示例
-└── docs/
-    └── 播放文字接口抓包.md      # /playtts 接口逆向记录
+└── client/
+    └── xiaomusic_tts_client.py  # 纯标准库 TTS 客户端示例
 ```
 
 ---
